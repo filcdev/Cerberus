@@ -1,9 +1,16 @@
 #include "dz_configMgr.h"
 #include <SPI.h>
-#include <SD.h>
 #include "dz_config.h"
 #include "dz_state.h"
 #include <SPIFFS.h>
+
+#if defined(DZ_USE_SDMMC)
+  #include <SD_MMC.h>
+  #define DZ_SD_FS SD_MMC
+#else
+  #include <SD.h>
+  #define DZ_SD_FS SD
+#endif
 
 DeviceConfig cfg;
 
@@ -17,10 +24,17 @@ void DZConfigManager::begin() {
     return;
   }
 
-  if (SD.begin(5)) {
+#if defined(DZ_USE_SDMMC)
+  DZ_SD_FS.setPins(SD_MMC_CLK, SD_MMC_CMD, SD_MMC_D0);
+  const bool sdOk = DZ_SD_FS.begin("/sdcard", true);
+#else
+  const bool sdOk = DZ_SD_FS.begin(SD_CS_PIN);
+#endif
+
+  if (sdOk) {
     logger.info("SD Card detected, checking for updates");
     checkSDUpdates();
-    SD.end();
+    DZ_SD_FS.end();
   } else {
     logger.info("No SD Card detected");
   }
@@ -29,24 +43,24 @@ void DZConfigManager::begin() {
 }
 
 void DZConfigManager::checkSDUpdates() {
-  if (SD.exists("/config.new.json")) {
+  if (DZ_SD_FS.exists("/config.new.json")) {
     logger.info("Found config.new.json, updating config");
     if (copyFile("/config.new.json", "/config.json")) {
-      SD.remove("/config.json");
-      SD.rename("/config.new.json", "/config.json");
+      DZ_SD_FS.remove("/config.json");
+      DZ_SD_FS.rename("/config.new.json", "/config.json");
     }
   }
   
-  if (SD.exists("/uids.json")) {
+  if (DZ_SD_FS.exists("/uids.json")) {
     logger.info("Found uids.json, updating uids");
     if (copyFile("/uids.json", "/uids.json")) {
-      SD.remove("/uids.json");
+      DZ_SD_FS.remove("/uids.json");
     }
   }
 }
 
 bool DZConfigManager::copyFile(const char* srcPath, const char* dstPath) {
-  File src = SD.open(srcPath, FILE_READ);
+  File src = DZ_SD_FS.open(srcPath, FILE_READ);
   if (!src) return false;
 
   File dst = SPIFFS.open(dstPath, FILE_WRITE);

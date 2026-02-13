@@ -3,11 +3,18 @@
 
 #define FW_VERSION "1.0.0"
 
+
+// SD
+#define SD_CS_PIN (5)
+#define SD_MMC_CMD (38)
+#define SD_MMC_CLK (39)
+#define SD_MMC_D0 (40)
+
 #define DOOR_PIN (14)
 #define BUZZER_PIN (18) // TODO: Not used yet
 #define BUTTON_PIN (26)
 
-#define LED_PIN (33)
+#define LED_PIN (48)
 #define LED_COUNT (16) //8 inside and 8 outside
 
 // I2C
