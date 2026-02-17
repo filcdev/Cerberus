@@ -31,9 +31,9 @@ void setup() {
   Serial.begin(115200);
   //esp_task_wdt_init(30, true);
   logger.info("Starting setup...");
-  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(2, OUTPUT);
   pinMode(DOOR_PIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH);
+  digitalWrite(2, HIGH);
   digitalWrite(DOOR_PIN, LOW);
   lcd.begin();
   ledControl.begin();
@@ -47,7 +47,7 @@ void setup() {
   dbControl.begin();
   otaControl.begin();
   logger.info("Setup complete");
-  digitalWrite(LED_BUILTIN, LOW);
+  digitalWrite(2, LOW);
   lcd.clear();
   lcd.printLn("Aegis");
 }

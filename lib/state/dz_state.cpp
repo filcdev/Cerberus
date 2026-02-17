@@ -204,7 +204,7 @@ void DZStateControl::handle()
     }
   }
   
-  digitalWrite(LED_BUILTIN, localState.doorOpen ? HIGH : LOW);
+  digitalWrite(2, localState.doorOpen ? HIGH : LOW);
   
   if(localState.message != "") {
     if(lastMessage != localState.message) {

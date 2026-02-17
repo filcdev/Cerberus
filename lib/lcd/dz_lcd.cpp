@@ -10,6 +10,7 @@ DZLCDControl::DZLCDControl() : lcd(LCD_ADDRESS, LCD_COLUMNS, LCD_ROWS), logger("
 void DZLCDControl::begin()
 {
   logger.info("Initializing LCD");
+  Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
   lcd.init();
   lcd.backlight();
   handle();
