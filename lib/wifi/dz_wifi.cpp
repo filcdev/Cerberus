@@ -8,6 +8,8 @@ void DZWIFIControl::begin()
 {
   logger.info("Connecting to WiFi SSID: %s", cfg.wifi_ssid.c_str());
   WiFi.begin(cfg.wifi_ssid.c_str(), cfg.wifi_psk.c_str());
+  _hostname += cfg.hostname;
+  WiFi.setHostname(_hostname.c_str());
 }
 
 void DZWIFIControl::handle()

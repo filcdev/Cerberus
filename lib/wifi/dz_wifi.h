@@ -14,6 +14,7 @@ public:
   }
 private:
   Logger logger;
+  std::string _hostname = "SzW-";
   unsigned long previousMillis = 0;
   unsigned long lastConnectionAttempt = 300000; // 5 minutes
 };

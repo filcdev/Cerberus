@@ -1,6 +1,34 @@
 #include "dz_db.h"
 #include "dz_state.h"
 
+#include <algorithm>
+
+namespace {
+bool sameUids(const std::vector<UidEntry>& left, const std::vector<UidEntry>& right)
+{
+  if (left.size() != right.size()) return false;
+
+  std::vector<UidEntry> a = left;
+  std::vector<UidEntry> b = right;
+
+  auto sorter = [](const UidEntry& lhs, const UidEntry& rhs) {
+    if (lhs.uid == rhs.uid) return lhs.name < rhs.name;
+    return lhs.uid < rhs.uid;
+  };
+
+  std::sort(a.begin(), a.end(), sorter);
+  std::sort(b.begin(), b.end(), sorter);
+
+  for (size_t i = 0; i < a.size(); ++i) {
+    if (a[i].uid != b[i].uid || a[i].name != b[i].name) {
+      return false;
+    }
+  }
+
+  return true;
+}
+} // namespace
+
 DZDBControl dbControl;
 
 DZDBControl::DZDBControl() : logger("DB") {}
@@ -99,15 +127,22 @@ bool DZDBControl::loadUIDs()
 void DZDBControl::updateFromJSON(JsonArray root)
 {
   logger.info("Updating UIDs from JSON");
-  uids.clear();
+  std::vector<UidEntry> nextUids;
   for (JsonVariant v : root) {
     if (!v.is<JsonObject>()) continue;
     JsonObject obj = v.as<JsonObject>();
     if (obj["uid"].is<const char*>() && obj["name"].is<const char*>()) {
       std::string uid = obj["uid"].as<std::string>();
       std::string name = obj["name"].as<std::string>();
-      uids.push_back({uid, name});
+      nextUids.push_back({uid, name});
     }
   }
+
+  if (sameUids(uids, nextUids)) {
+    logger.info("UIDs unchanged; skipping SPIFFS write");
+    return;
+  }
+
+  uids = std::move(nextUids);
   saveUIDs();
 }
