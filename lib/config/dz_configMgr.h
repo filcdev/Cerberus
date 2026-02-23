@@ -14,7 +14,6 @@ struct DeviceConfig {
   uint16_t ws_port = 443;
   std::string ws_path = "/";
   std::string ota_url = "";
-  std::string cert = "";
 };
 
 class DZConfigManager {
