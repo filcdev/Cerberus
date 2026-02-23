@@ -102,37 +102,34 @@ void DZLEDControl::handleErrorState(unsigned long now) {
     }
 }
 
-void DZLEDControl::handleDoorState(unsigned long now, unsigned long dt) {
-    if (doorSeqState == 0) {
-      doorSeqState = 1;
-      doorSeqStart = now;
-      doorPulsePhase = 0.0f;
-      doorPulsesDone = 0;
-    }
-    if (doorSeqState == 1) {
-      const float pulsePeriod = 600.0f;
-      doorPulsePhase += (dt / pulsePeriod);
-      if (doorPulsePhase >= 1.0f) {
-        doorPulsePhase -= floor(doorPulsePhase);
-        doorPulsesDone += 1;
-        if (doorPulsesDone >= 2) {
-          doorSeqState = 2;
-        } else {
-          doorSeqStart = now;
-        }
-      }
-      float t = doorPulsePhase * 2.0f;
-      if (t > 1.0f) t = 2.0f - t;
-      uint8_t v = (uint8_t)(t * 255.0f);
-      for (int i = 0; i < 16; ++i) {
-        pixels.setPixelColor(i, pixels.Color(0, v, 0));
-      }
-      pixels.show();
-    }
-    if (doorSeqState == 2) {
+void DZLEDControl::handleDoorState(unsigned long now, unsigned long doorOpenedAt) {
+    if (doorOpenedAt == 0) {
       pixels.fill(pixels.Color(0, 255, 0));
       pixels.show();
+      return;
     }
+
+    unsigned long elapsed = now - doorOpenedAt;
+    if (elapsed > DOOR_OPEN_DURATION_MS) elapsed = DOOR_OPEN_DURATION_MS;
+
+    unsigned long remaining = DOOR_OPEN_DURATION_MS - elapsed;
+    int sideCount = LED_COUNT / 2;
+    if (sideCount <= 0) {
+      pixels.clear();
+      pixels.show();
+      return;
+    }
+
+    int litPerSide = (int)((remaining * sideCount + DOOR_OPEN_DURATION_MS - 1) / DOOR_OPEN_DURATION_MS);
+    if (litPerSide < 0) litPerSide = 0;
+    if (litPerSide > sideCount) litPerSide = sideCount;
+
+    pixels.clear();
+    for (int i = 0; i < litPerSide; ++i) {
+      pixels.setPixelColor(i, pixels.Color(0, 255, 0));
+      pixels.setPixelColor(i + sideCount, pixels.Color(0, 255, 0));
+    }
+    pixels.show();
 }
 
 void DZLEDControl::handleIdleState(unsigned long dt) {
@@ -155,10 +152,11 @@ void DZLEDControl::handle()
   lastMillis = now;
 
   bool isError = (stateControl.getDeviceState() == DEVICE_STATE_ERROR);
-  bool isDoor = stateControl.isDoorOpen();
+  GlobalState snapshot = stateControl.getSnapshot();
+  bool isDoor = snapshot.doorOpen;
 
   if (isDoor) {
-    handleDoorState(now, dt);
+    handleDoorState(now, snapshot.doorOpenTmr);
     return;
   } else {
     doorSeqState = 0;

@@ -44,7 +44,7 @@ void DZWSControl::handle() {
         doc["type"] = "card-read";
         doc["uid"] = event.uid;
         doc["authorized"] = event.authorized;
-        doc["isButton"] = event.isButton;
+        doc["buttonPressed"] = event.isButton;
         std::string msg;
         serializeJson(doc, msg);
         send(msg);
@@ -139,6 +139,7 @@ void DZWSControl::webSocketEvent(WStype_t type, uint8_t * payload, size_t length
       break;
     case WStype_TEXT:
       wsControl.logger.info("WebSocket Message Received: %s", payload);
+      Serial.println((char*)payload);
       handleIncomingMessage(std::string((char*)payload, length));
       break;
     case WStype_BIN:

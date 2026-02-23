@@ -25,7 +25,7 @@ private:
     unsigned long errSeqStart;
 
     void handleErrorState(unsigned long now);
-    void handleDoorState(unsigned long now, unsigned long dt);
+    void handleDoorState(unsigned long now, unsigned long doorOpenedAt);
     void handleIdleState(unsigned long dt);
 };
 

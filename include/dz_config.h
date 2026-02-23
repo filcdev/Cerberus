@@ -11,6 +11,7 @@
 #define SD_MMC_D0 (40)
 
 #define DOOR_PIN (45)
+#define DOOR_OPEN_DURATION_MS (5000)
 #define BUZZER_PIN (18) // TODO: Not used yet
 #define BUTTON_PIN (10)
 

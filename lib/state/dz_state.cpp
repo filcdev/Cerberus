@@ -9,12 +9,13 @@ DZStateControl::DZStateControl() : logger("STAT") {
 }
 
 void DZStateControl::begin() {
-  doorTimer = xTimerCreate("DoorTimer", pdMS_TO_TICKS(5000), pdFALSE, (void*)this, doorTimerCallback);
+  doorTimer = xTimerCreate("DoorTimer", pdMS_TO_TICKS(DOOR_OPEN_DURATION_MS), pdFALSE, (void*)this, doorTimerCallback);
 }
 
 void DZStateControl::openDoor() {
   if (xSemaphoreTake(_mutex, portMAX_DELAY)) {
     _state.doorOpen = true;
+    _state.doorOpenTmr = millis();
     xSemaphoreGive(_mutex);
   }
   if (doorTimer != NULL) {
@@ -27,6 +28,7 @@ void DZStateControl::doorTimerCallback(TimerHandle_t xTimer) {
   instance->logger.info("Closing door");
   if (xSemaphoreTake(instance->_mutex, portMAX_DELAY)) {
     instance->_state.doorOpen = false;
+    instance->_state.doorOpenTmr = 0;
     xSemaphoreGive(instance->_mutex);
   }
 }
