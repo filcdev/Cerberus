@@ -10,7 +10,7 @@
 #define SD_MMC_CLK (39)
 #define SD_MMC_D0 (40)
 
-#define DOOR_PIN (14)
+#define DOOR_PIN (45)
 #define BUZZER_PIN (18) // TODO: Not used yet
 #define BUTTON_PIN (10)
 
@@ -28,7 +28,7 @@
 
 // PN532 HSU
 #define PN532_HSU_BAUD (115200)
-#define PN532_HSU_RX_PIN (16)
-#define PN532_HSU_TX_PIN (17)
+#define PN532_HSU_RX_PIN (42)
+#define PN532_HSU_TX_PIN (41)
 
 #endif

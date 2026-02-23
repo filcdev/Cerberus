@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "dz_state.h"
+#include <dz_config.h>
 
 DZStateControl stateControl;
 
@@ -205,6 +206,7 @@ void DZStateControl::handle()
   }
   
   digitalWrite(2, localState.doorOpen ? HIGH : LOW);
+  digitalWrite(DOOR_PIN, localState.doorOpen ? HIGH : LOW);
   
   if(localState.message != "") {
     if(lastMessage != localState.message) {

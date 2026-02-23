@@ -124,7 +124,7 @@ void DZLEDControl::handleDoorState(unsigned long now, unsigned long dt) {
       float t = doorPulsePhase * 2.0f;
       if (t > 1.0f) t = 2.0f - t;
       uint8_t v = (uint8_t)(t * 255.0f);
-      for (int i = 0; i < 8; ++i) {
+      for (int i = 0; i < 16; ++i) {
         pixels.setPixelColor(i, pixels.Color(0, v, 0));
       }
       pixels.show();
@@ -143,7 +143,7 @@ void DZLEDControl::handleIdleState(unsigned long dt) {
     if (t > 1.0f) t = 2.0f - t;
     uint8_t v = (uint8_t)(t * 200.0f);
     pixels.clear();
-    pixels.fill(pixels.Color(0, 0, v), 0, 8);
+    pixels.fill(pixels.Color(0, 0, v), 8, 8);
     pixels.show();
 }
 

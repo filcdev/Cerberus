@@ -53,6 +53,7 @@ void DZWSControl::handle() {
   }
 
   if (!stateControl.hasError(ErrorSource::WEBSOCKET) && millis() - lastPingTime > PING_INTERVAL) {
+    logger.info("Sending WebSocket ping");
     sendPing();
   }
 }
