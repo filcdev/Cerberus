@@ -62,6 +62,8 @@ struct GlobalState
   std::string message = "";
   bool doorOpen = false;
   unsigned long doorOpenTmr = 0;
+  bool accessDenied = false;
+  unsigned long accessDeniedTmr = 0;
   std::string time = "--:--";
 };
 
@@ -72,6 +74,8 @@ public:
   void begin();
   void handle();
   void openDoor();
+  void denyAccess();
+  bool isAccessDenied();
 
   void setError(ErrorSource source, bool hasError, const std::string& message = "");
   bool hasError(ErrorSource source);
@@ -102,6 +106,9 @@ private:
   std::string lastMessage = "";
   TimerHandle_t doorTimer = NULL;
   static void doorTimerCallback(TimerHandle_t xTimer);
+
+  TimerHandle_t deniedTimer = NULL;
+  static void deniedTimerCallback(TimerHandle_t xTimer);
 };
 
 extern DZStateControl stateControl;

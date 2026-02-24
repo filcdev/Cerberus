@@ -73,6 +73,7 @@ void DZNFCControl::handle()
     } else {
       logger.info("Access Denied");
       stateControl.setMessage("Access Denied");
+      stateControl.denyAccess();
     }
     wsControl.sendCardRead(uidStr, authorized, false);
   }

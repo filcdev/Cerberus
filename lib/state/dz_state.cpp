@@ -10,6 +10,7 @@ DZStateControl::DZStateControl() : logger("STAT") {
 
 void DZStateControl::begin() {
   doorTimer = xTimerCreate("DoorTimer", pdMS_TO_TICKS(DOOR_OPEN_DURATION_MS), pdFALSE, (void*)this, doorTimerCallback);
+  deniedTimer = xTimerCreate("DeniedTimer", pdMS_TO_TICKS(1500), pdFALSE, (void*)this, deniedTimerCallback);
 }
 
 void DZStateControl::openDoor() {
@@ -31,6 +32,36 @@ void DZStateControl::doorTimerCallback(TimerHandle_t xTimer) {
     instance->_state.doorOpenTmr = 0;
     xSemaphoreGive(instance->_mutex);
   }
+}
+
+void DZStateControl::denyAccess() {
+  if (xSemaphoreTake(_mutex, portMAX_DELAY)) {
+    _state.accessDenied = true;
+    _state.accessDeniedTmr = millis();
+    xSemaphoreGive(_mutex);
+  }
+  if (deniedTimer != NULL) {
+    xTimerReset(deniedTimer, 0);
+  }
+}
+
+void DZStateControl::deniedTimerCallback(TimerHandle_t xTimer) {
+  DZStateControl* instance = (DZStateControl*) pvTimerGetTimerID(xTimer);
+  if (xSemaphoreTake(instance->_mutex, portMAX_DELAY)) {
+    instance->_state.accessDenied = false;
+    instance->_state.accessDeniedTmr = 0;
+    instance->_state.message = "";
+    xSemaphoreGive(instance->_mutex);
+  }
+}
+
+bool DZStateControl::isAccessDenied() {
+  bool denied = false;
+  if (xSemaphoreTake(_mutex, portMAX_DELAY)) {
+    denied = _state.accessDenied;
+    xSemaphoreGive(_mutex);
+  }
+  return denied;
 }
 
 void DZStateControl::setError(ErrorSource source, bool hasError, const std::string& message) {

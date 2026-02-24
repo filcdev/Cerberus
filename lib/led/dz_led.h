@@ -24,9 +24,14 @@ private:
     int errSeqState;
     unsigned long errSeqStart;
 
+    int deniedSeqState;
+    unsigned long deniedSeqStart;
+    int deniedFlashCount;
+
     void handleErrorState(unsigned long now);
     void handleDoorState(unsigned long now, unsigned long doorOpenedAt);
     void handleIdleState(unsigned long dt);
+    void handleAccessDeniedState(unsigned long now);
 };
 
 #endif

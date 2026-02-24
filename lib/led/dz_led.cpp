@@ -36,6 +36,10 @@ void DZLEDControl::begin()
   errSeqState = 0;
   errSeqStart = 0;
 
+  deniedSeqState = 0;
+  deniedSeqStart = 0;
+  deniedFlashCount = 0;
+
   testSequence();
 }
 
@@ -132,6 +136,57 @@ void DZLEDControl::handleDoorState(unsigned long now, unsigned long doorOpenedAt
     pixels.show();
 }
 
+void DZLEDControl::handleAccessDeniedState(unsigned long now) {
+    const unsigned long FLASH_ON_MS = 120;
+    const unsigned long FLASH_OFF_MS = 120;
+    const int TOTAL_FLASHES = 4;
+
+    if (deniedSeqState == 0) {
+      deniedSeqState = 1;
+      deniedSeqStart = now;
+      deniedFlashCount = 0;
+    }
+
+    // Flash ON
+    if (deniedSeqState == 1) {
+      unsigned long elapsed = now - deniedSeqStart;
+      if (elapsed >= FLASH_ON_MS) {
+        pixels.clear();
+        pixels.show();
+        deniedSeqState = 2;
+        deniedSeqStart = now;
+        deniedFlashCount++;
+      } else {
+        pixels.fill(pixels.Color(255, 0, 0));
+        pixels.show();
+      }
+      return;
+    }
+
+    // Flash OFF (gap)
+    if (deniedSeqState == 2) {
+      if (deniedFlashCount >= TOTAL_FLASHES) {
+        // Done flashing, stay dark until state clears
+        pixels.clear();
+        pixels.show();
+        deniedSeqState = 3;
+        return;
+      }
+      if (now - deniedSeqStart >= FLASH_OFF_MS) {
+        deniedSeqState = 1;
+        deniedSeqStart = now;
+      }
+      return;
+    }
+
+    // Holding dark after flashes
+    if (deniedSeqState == 3) {
+      pixels.clear();
+      pixels.show();
+      return;
+    }
+}
+
 void DZLEDControl::handleIdleState(unsigned long dt) {
     const float period = 4000.0f;
     breathePhase += (dt / period);
@@ -154,12 +209,22 @@ void DZLEDControl::handle()
   bool isError = (stateControl.getDeviceState() == DEVICE_STATE_ERROR);
   GlobalState snapshot = stateControl.getSnapshot();
   bool isDoor = snapshot.doorOpen;
+  bool isDenied = snapshot.accessDenied;
 
   if (isDoor) {
     handleDoorState(now, snapshot.doorOpenTmr);
+    deniedSeqState = 0;
     return;
   } else {
     doorSeqState = 0;
+  }
+
+  if (isDenied) {
+    handleAccessDeniedState(now);
+    doorSeqState = 0;
+    return;
+  } else {
+    deniedSeqState = 0;
   }
 
   if (isError) {
