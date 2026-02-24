@@ -65,6 +65,7 @@ struct GlobalState
   bool accessDenied = false;
   unsigned long accessDeniedTmr = 0;
   std::string time = "--:--";
+  int otaProgress = 0;
 };
 
 class DZStateControl
@@ -91,6 +92,9 @@ public:
   
   void setTime(const std::string& time);
   std::string getTime();
+  
+  void setOtaProgress(int progress);
+  int getOtaProgress();
   
   bool isDoorOpen();
   

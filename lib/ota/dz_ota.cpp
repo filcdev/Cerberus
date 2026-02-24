@@ -18,6 +18,12 @@ void DZOTAControl::otaTask(void* param)
   client.setInsecure();
 
   httpUpdate.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  httpUpdate.onProgress([](int current, int total) {
+    if (total > 0) {
+      int pct = (current * 100) / total;
+      stateControl.setOtaProgress(pct);
+    }
+  });
   t_httpUpdate_return ret = httpUpdate.update(client, self->otaUrl);
 
   if (ret == HTTP_UPDATE_OK) {

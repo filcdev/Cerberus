@@ -40,6 +40,11 @@ void DZLEDControl::begin()
   deniedSeqStart = 0;
   deniedFlashCount = 0;
 
+  otaSeqState = 0;
+  otaSeqStart = 0;
+  otaSpinPhase = 0.0f;
+  lastOtaProgress = 0;
+
   testSequence();
 }
 
@@ -166,7 +171,6 @@ void DZLEDControl::handleAccessDeniedState(unsigned long now) {
     // Flash OFF (gap)
     if (deniedSeqState == 2) {
       if (deniedFlashCount >= TOTAL_FLASHES) {
-        // Done flashing, stay dark until state clears
         pixels.clear();
         pixels.show();
         deniedSeqState = 3;
@@ -179,7 +183,6 @@ void DZLEDControl::handleAccessDeniedState(unsigned long now) {
       return;
     }
 
-    // Holding dark after flashes
     if (deniedSeqState == 3) {
       pixels.clear();
       pixels.show();
@@ -196,6 +199,24 @@ void DZLEDControl::handleIdleState(unsigned long dt) {
     uint8_t v = (uint8_t)(t * 200.0f);
     pixels.clear();
     pixels.fill(pixels.Color(0, 0, v), 8, 8);
+    pixels.show();
+}
+
+void DZLEDControl::handleUpdatingState(unsigned long now) {
+    int progress = stateControl.getOtaProgress();
+    if (progress < 0) progress = 0;
+    if (progress > 100) progress = 100;
+
+    int sideCount = LED_COUNT / 2;
+    int litPerSide = (progress * sideCount) / 100;
+
+    pixels.clear();
+
+    for (int i = 0; i < litPerSide && i < sideCount; ++i) {
+      pixels.setPixelColor(i, pixels.Color(0, 200, 255));
+      pixels.setPixelColor(i + sideCount, pixels.Color(0, 200, 255));
+    }
+
     pixels.show();
 }
 
@@ -233,6 +254,11 @@ void DZLEDControl::handle()
     return;
   }
 
+
+  if (stateControl.getDeviceState() == DEVICE_STATE_UPDATING) {
+    handleUpdatingState(now);
+    return;
+  }
 
   if (stateControl.getDeviceState() == DEVICE_STATE_IDLE) {
     handleIdleState(dt);

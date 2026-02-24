@@ -178,6 +178,22 @@ std::string DZStateControl::getTime() {
   return t;
 }
 
+void DZStateControl::setOtaProgress(int progress) {
+  if (xSemaphoreTake(_mutex, portMAX_DELAY)) {
+    _state.otaProgress = progress;
+    xSemaphoreGive(_mutex);
+  }
+}
+
+int DZStateControl::getOtaProgress() {
+  int p = 0;
+  if (xSemaphoreTake(_mutex, portMAX_DELAY)) {
+    p = _state.otaProgress;
+    xSemaphoreGive(_mutex);
+  }
+  return p;
+}
+
 bool DZStateControl::isDoorOpen() {
   bool open = false;
   if (xSemaphoreTake(_mutex, portMAX_DELAY)) {

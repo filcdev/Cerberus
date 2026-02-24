@@ -32,6 +32,12 @@ private:
     void handleDoorState(unsigned long now, unsigned long doorOpenedAt);
     void handleIdleState(unsigned long dt);
     void handleAccessDeniedState(unsigned long now);
+    void handleUpdatingState(unsigned long now);
+
+    int otaSeqState;
+    unsigned long otaSeqStart;
+    float otaSpinPhase;
+    int lastOtaProgress;
 };
 
 #endif
