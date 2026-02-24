@@ -272,5 +272,8 @@ void DZStateControl::handle()
       lastMessage = "";
       messageTmr = 0;
     }
+  } else {
+    lastMessage = "";
+    messageTmr = 0;
   }
 }
