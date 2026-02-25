@@ -11,6 +11,8 @@ public:
   void handle();
 private:
   Logger logger;
+  int buttonState = HIGH;
+  int lastButtonState = LOW;
   unsigned long lastDebounceTime = 0;
 };
 

@@ -12,15 +12,22 @@ void DZButton::begin() {
 }
 
 void DZButton::handle() {
-  int buttonState = digitalRead(BUTTON_PIN);
-  if (buttonState == LOW) {
-    if ((millis() - lastDebounceTime) > 500) {
+  int reading = digitalRead(BUTTON_PIN);
+
+  if (reading != lastButtonState) {
+    lastDebounceTime = millis();
+  }
+
+  if ((millis() - lastDebounceTime) > 50) { // 50ms debounce time
+    if (reading == LOW && buttonState == HIGH) {
       logger.info("Button pressed, opening door");
       stateControl.openDoor();
       stateControl.setHeader("Aegis  <<");
       stateControl.setMessage("Door Open");
-      lastDebounceTime = millis();
       wsControl.sendCardRead("", true, true);
     }
+    buttonState = reading;
   }
+
+  lastButtonState = reading;
 }
