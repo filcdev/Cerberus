@@ -24,7 +24,7 @@ void DZButton::handle() {
       stateControl.openDoor();
       stateControl.setHeader("Aegis  <<");
       stateControl.setMessage("Door Open");
-      wsControl.sendCardRead("", true, true);
+      if(!stateControl.isDoorOpen()) wsControl.sendCardRead("", true, true);
     }
     buttonState = reading;
   }
