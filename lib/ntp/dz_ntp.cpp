@@ -9,7 +9,7 @@ static const int TIME_RETRY_INTERVAL = 5000;
 
 void DZNTPControl::setup() {
     logger.info("Configuring NTP");
-    configTime(GMT_OFFSET_SEC, DAYLIGHT_OFFSET_SEC, NTP_SERVER);
+    configTzTime(TIMEZONE, NTP_SERVER);
 }
 
 void DZNTPControl::handle() {

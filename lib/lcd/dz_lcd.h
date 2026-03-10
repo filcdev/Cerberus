@@ -26,6 +26,10 @@ private:
   void displayCurrentState(const GlobalState& currentState);
   void cycleErrors(const GlobalState& currentState);
 
+  bool probeI2C();
+  void reinitLCD();
+  void healthCheck();
+
   LiquidCrystal_I2C lcd;
   GlobalState lastState;
   std::string lastTime;
@@ -34,9 +38,15 @@ private:
   unsigned long lastErrorSwitch = 0;
   unsigned long backlightTmr = 0;
   bool backlightOn = true;
+
+  bool wasDisconnected = false;
+  unsigned long lastProbeTime = 0;
+  unsigned long lastPeriodicReinit = 0;
   
   static const int switchInterval = 3000;
   static const unsigned long BACKLIGHT_TIMEOUT = 30000;
+  static const unsigned long PROBE_INTERVAL = 1000;           // check I2C every 1s
+  static const unsigned long PERIODIC_REINIT_INTERVAL = 60000; // safety reinit every 60s
 };
 
 #endif

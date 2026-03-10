@@ -7,22 +7,12 @@ namespace {
 bool sameUids(const std::vector<UidEntry>& left, const std::vector<UidEntry>& right)
 {
   if (left.size() != right.size()) return false;
-
-  std::vector<UidEntry> a = left;
-  std::vector<UidEntry> b = right;
-
-  auto sorter = [](const UidEntry& lhs, const UidEntry& rhs) {
-    if (lhs.uid == rhs.uid) return lhs.name < rhs.name;
-    return lhs.uid < rhs.uid;
-  };
-
-  std::sort(a.begin(), a.end(), sorter);
-  std::sort(b.begin(), b.end(), sorter);
-
-  for (size_t i = 0; i < a.size(); ++i) {
-    if (a[i].uid != b[i].uid || a[i].name != b[i].name) {
-      return false;
+  for (const auto& r : right) {
+    bool found = false;
+    for (const auto& l : left) {
+      if (l.uid == r.uid && l.name == r.name) { found = true; break; }
     }
+    if (!found) return false;
   }
 
   return true;

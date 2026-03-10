@@ -30,9 +30,6 @@ void DZWSControl::handle() {
   if(stateControl.hasError(ErrorSource::WIFI)) {
     return;
   }
-  if(webSocket.isConnected() == false) {
-    logger.info("WebSocket not connected");
-  }
   vTaskDelay(1); 
   webSocket.loop();
 

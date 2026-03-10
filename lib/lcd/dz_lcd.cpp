@@ -13,11 +13,55 @@ void DZLCDControl::begin()
   Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
   lcd.init();
   lcd.backlight();
+  lastPeriodicReinit = millis();
+  lastProbeTime = millis();
   handle();
 }
 
+bool DZLCDControl::probeI2C()
+{
+  Wire.beginTransmission(LCD_ADDRESS);
+  return Wire.endTransmission() == 0; // 0 = ACK received
+}
+
+void DZLCDControl::reinitLCD()
+{
+  lcd.init();
+  if (backlightOn) {
+    lcd.backlight();
+    lcd.display();
+  } else {
+    lcd.noBacklight();
+    lcd.noDisplay();
+  }
+  lastState = GlobalState();
+  lastTime = "";
+}
+
+void DZLCDControl::healthCheck()
+{
+  unsigned long now = millis();
+  if (now - lastProbeTime >= PROBE_INTERVAL) {
+    lastProbeTime = now;
+    bool connected = probeI2C();
+
+    if (!connected) {
+      wasDisconnected = true;
+      return;
+    }
+
+    if (wasDisconnected) {
+      logger.info("LCD reconnected, reinitializing");
+      wasDisconnected = false;
+      reinitLCD();
+      lastPeriodicReinit = now;
+      return;
+    }
+  }
+}
+
 void DZLCDControl::printLn(const char* msg) {
-  const size_t max = LCD_COLUMNS; // 16
+  const size_t max = LCD_COLUMNS;
   size_t len = strlen(msg);
   size_t toWrite = (len < max) ? len : max;
   for (size_t i = 0; i < toWrite; ++i) {
@@ -118,6 +162,9 @@ void DZLCDControl::handle()
   static unsigned long lastHandle = 0;
   if (millis() - lastHandle < 200) return;
   lastHandle = millis();
+
+  healthCheck();
+  if (wasDisconnected) return; // skip display updates while disconnected
 
   GlobalState currentState = stateControl.getSnapshot();
   updateHeader(currentState);

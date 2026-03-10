@@ -6,8 +6,7 @@
 #include "dz_logger.h"
 
 #define NTP_SERVER "pool.ntp.org"
-#define GMT_OFFSET_SEC 3600
-#define DAYLIGHT_OFFSET_SEC 3600
+#define TIMEZONE "CET-1CEST,M3.5.0,M10.5.0/3"
 #define TIME_SYNC_INTERVAL 3600000
 
 class DZNTPControl {
