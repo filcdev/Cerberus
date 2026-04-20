@@ -1,7 +1,7 @@
 #ifndef DZ_CONFIG_H
 #define DZ_CONFIG_H
 
-#define FW_VERSION "1.0.5"
+#define FW_VERSION "1.0.6"
 
 
 // SD
