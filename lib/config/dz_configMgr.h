@@ -13,6 +13,8 @@ struct DeviceConfig {
   std::string ws_addr = "";
   uint16_t ws_port = 443;
   std::string ws_path = "/";
+  bool ws_secure = false;
+  bool ws_allow_insecure = false;
   std::string ota_url = "";
 };
 

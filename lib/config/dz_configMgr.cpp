@@ -112,6 +112,8 @@ void DZConfigManager::parseConfigFile() {
   if (doc["ws_addr"]) cfg.ws_addr = doc["ws_addr"].as<std::string>();
   if (doc["ws_port"]) cfg.ws_port = doc["ws_port"].as<uint16_t>();
   if (doc["ws_path"]) cfg.ws_path = doc["ws_path"].as<std::string>();
+  if (doc["ws_secure"]) cfg.ws_secure = doc["ws_secure"].as<bool>();
+  if (doc["ws_allow_insecure"]) cfg.ws_allow_insecure = doc["ws_allow_insecure"].as<bool>();
   if (doc["ota_url"]) cfg.ota_url = doc["ota_url"].as<std::string>();
   logger.info("Config loaded successfully");
   stateControl.setError(ErrorSource::CFG, false, "");

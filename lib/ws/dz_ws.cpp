@@ -13,13 +13,24 @@ void DZWSControl::begin() {
   logger.info("Initializing WebSocket");
   _wsQueue = xQueueCreate(10, sizeof(WSEvent));
   if (cfg.ws_addr.length() > 0 && cfg.ws_port > 0 && cfg.ws_path.length() > 0 && cfg.api_key.length() > 0) {
-    webSocket.begin(cfg.ws_addr.c_str(), cfg.ws_port, cfg.ws_path.c_str());
+    if (cfg.ws_secure) {
+      if (cfg.ws_allow_insecure) {
+        logger.info("Connecting WebSocket over TLS without certificate validation");
+        webSocket.beginSSL(cfg.ws_addr.c_str(), cfg.ws_port, cfg.ws_path.c_str());
+      } else {
+        logger.error("Secure WebSocket requested but no CA cert configured");
+        stateControl.setError(ErrorSource::WEBSOCKET, true, "WS TLS Cfg");
+        return;
+      }
+    } else {
+      webSocket.begin(cfg.ws_addr.c_str(), cfg.ws_port, cfg.ws_path.c_str());
+    }
     webSocket.onEvent(webSocketEvent);
     webSocket.setReconnectInterval(RECONNECT_INTERVAL);
     _extraHeaders = "X-Aegis-Device-Token: ";
     _extraHeaders += cfg.api_key.c_str();
     webSocket.setExtraHeaders(_extraHeaders.c_str());
-    webSocket.enableHeartbeat(5000, 5000, 1); // Disable built-in heartbeat
+    webSocket.enableHeartbeat(5000, 5000, 1);
   } else {
     logger.error("WebSocket configuration missing");
     stateControl.setError(ErrorSource::WEBSOCKET, true, "No WS Config");
