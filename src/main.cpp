@@ -3,7 +3,6 @@
 #include "freertos/task.h"
 #include "esp_task_wdt.h"
 #include "dz_state.h"
-#include "dz_lcd.h"
 #include "dz_button.h"
 #include "dz_wifi.h"
 #include "dz_config.h"
@@ -18,7 +17,6 @@
 
 static Logger logger("MAIN");
 
-DZLCDControl lcd;
 DZButton button;
 DZWIFIControl wifiControl;
 DZNTPControl ntpControl;
@@ -35,7 +33,6 @@ void setup() {
   pinMode(DOOR_PIN, OUTPUT);
   digitalWrite(2, HIGH);
   digitalWrite(DOOR_PIN, LOW);
-  lcd.begin();
   ledControl.begin();
   button.begin();
   stateControl.begin();
@@ -48,8 +45,7 @@ void setup() {
   otaControl.begin();
   logger.info("Setup complete");
   digitalWrite(2, LOW);
-  lcd.clear();
-  lcd.printLn("Aegis");
+
 }
 
 void NetworkTask(void *pvParameters) {
@@ -68,7 +64,6 @@ void AppTask(void *pvParameters) {
   for (;;) {
     button.handle();
     stateControl.handle();
-    lcd.handle();
     nfcControl.handle();
     ledControl.handle();
     //vTaskDelay(pdMS_TO_TICKS(50));
