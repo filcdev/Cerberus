@@ -1,10 +1,15 @@
 #include "dz_nfc.h"
 #include "dz_state.h"
 #include "dz_ws.h"
+#include "dz_configMgr.h"
 #include <ArduinoJson.h>
 #include <string>
 
-DZNFCControl::DZNFCControl() : logger("NFC") {}
+// ── DESFire PICC AID (3‑byte application identifier) ──────
+static const uint8_t DESFIRE_AID[]  = DESFIRE_DEFAULT_AID;
+static const uint8_t DESFIRE_AID_LEN = DESFIRE_DEFAULT_AID_LEN;
+
+DZNFCControl::DZNFCControl() : logger("NFC"), desfire(nfc) {}
 
 void DZNFCControl::begin()
 {
@@ -55,26 +60,101 @@ void DZNFCControl::handle()
   uint8_t uidLength;
   if (nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength)) {
     lastDetectionTime = now;
-    std::string uidStr;
-    char buf[4];
-    for (uint8_t i = 0; i < uidLength; i++) {
-      if (i > 0) uidStr += ':';
-      snprintf(buf, sizeof(buf), "%02X", uid[i]);
-      uidStr += buf;
-    }
-    logger.info("Card detected: %s", uidStr.c_str());
+
+    std::string uidStr = uidToStr(uid, uidLength);
+
+    // ── DESFire‑only authentication ─────────────────────────
     std::string name;
-    bool authorized = dbControl.isAuthorized(uidStr, name);
+    bool authorized = tryDESFireAuth(name);
+
     if (authorized) {
-      logger.info("Access Granted: %s", name.c_str());
+      logger.info("Access Granted (DESFire): %s", name.c_str());
       stateControl.setHeader("Welcome >>");
       stateControl.setMessage(name);
       stateControl.openDoor();
     } else {
-      logger.info("Access Denied");
+      logger.info("Access Denied: %s", uidStr.c_str());
       stateControl.setMessage("Access Denied");
       stateControl.denyAccess();
     }
+
     wsControl.sendCardRead(uidStr, authorized, false);
   }
+}
+
+// ────────────────────────────────────────────────────────────────
+//  uidToStr  – format UID as "AA:BB:CC:DD:..."
+// ────────────────────────────────────────────────────────────────
+std::string DZNFCControl::uidToStr(const uint8_t *uid, uint8_t len)
+{
+  std::string out;
+  char buf[4];
+  for (uint8_t i = 0; i < len; i++) {
+    if (i > 0) out += ':';
+    snprintf(buf, sizeof(buf), "%02X", uid[i]);
+    out += buf;
+  }
+  return out;
+}
+
+// ────────────────────────────────────────────────────────────────
+//  tryDESFireAuth  – authenticate + read file → access decision
+// ────────────────────────────────────────────────────────────────
+bool DZNFCControl::tryDESFireAuth(std::string &nameOut)
+{
+  if (!cfg.desfireKeySet) {
+    logger.debug("DESFire key not configured");
+    return false;
+  }
+
+  // ── Step 1 – Detect DESFire ───────────────────────────────
+  if (!desfire.detectDESFire()) {
+    logger.debug("Not a DESFire card");
+    return false;
+  }
+
+  logger.info("DESFire card detected");
+
+  // ── Step 2 – Select application ───────────────────────────
+  if (!desfire.selectApplication(DESFIRE_AID, DESFIRE_AID_LEN)) {
+    logger.info("DESFire app select failed – wrong AID?");
+    return false;
+  }
+
+  // ── Step 3 – AES‑128 authenticate ─────────────────────────
+  if (!desfire.authenticateAES(DESFIRE_DEFAULT_KEY_NUM, cfg.desfireKey)) {
+    logger.info("DESFire auth failed – wrong key?");
+    return false;
+  }
+
+  logger.info("DESFire authenticated");
+
+  // ── Step 4 – Read credential file ─────────────────────────
+  uint8_t fileData[64];
+  uint16_t dataLen = 0;
+  if (!desfire.readData(DESFIRE_DEFAULT_FILE_ID, 0, 32,
+                        fileData, &dataLen)) {
+    logger.info("DESFire file read failed");
+    return false;
+  }
+
+  // ── Step 5 – Extract name from file data (ASCII) ──────────
+  nameOut.clear();
+  for (uint16_t i = 0; i < dataLen && fileData[i] != 0x00; i++) {
+    if (fileData[i] >= 0x20 && fileData[i] <= 0x7E) {
+      nameOut += (char)fileData[i];
+    }
+  }
+
+  if (nameOut.empty()) {
+    // Build hex string as fallback identifier
+    char hex[4];
+    for (uint16_t i = 0; i < dataLen && i < 32; i++) {
+      snprintf(hex, sizeof(hex), "%02X", fileData[i]);
+      nameOut += hex;
+    }
+  }
+
+  logger.info("DESFire credential: %s", nameOut.c_str());
+  return true;
 }

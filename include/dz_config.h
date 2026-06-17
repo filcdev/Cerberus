@@ -18,14 +18,15 @@
 #define LED_PIN (48)
 #define LED_COUNT (16) //8 inside and 8 outside
 
-// I2C
-#define PN532_ADDRESS (0x48)
-#define I2C_SDA_PIN (21)
-#define I2C_SCL_PIN (47)
-
 // PN532 HSU
 #define PN532_HSU_BAUD (115200)
-#define PN532_HSU_RX_PIN (21)
-#define PN532_HSU_TX_PIN (20)
+#define PN532_HSU_RX_PIN (20)
+#define PN532_HSU_TX_PIN (21)
+
+// DESFire
+#define DESFIRE_DEFAULT_AID {0x00, 0x00, 0x00}
+#define DESFIRE_DEFAULT_AID_LEN (3)
+#define DESFIRE_DEFAULT_FILE_ID (0x00)
+#define DESFIRE_DEFAULT_KEY_NUM (0x00)
 
 #endif

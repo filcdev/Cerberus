@@ -43,11 +43,16 @@ void DZConfigManager::begin() {
 }
 
 void DZConfigManager::checkSDUpdates() {
+  // First-time setup: copy config.json from SD if not on SPIFFS
+  if (!SPIFFS.exists("/config.json") && DZ_SD_FS.exists("/config.json")) {
+    logger.info("Copying config.json from SD card (first-time setup)");
+    copyFile("/config.json", "/config.json");
+  }
+
   if (DZ_SD_FS.exists("/config.new.json")) {
     logger.info("Found config.new.json, updating config");
     if (copyFile("/config.new.json", "/config.json")) {
-      DZ_SD_FS.remove("/config.json");
-      DZ_SD_FS.rename("/config.new.json", "/config.json");
+      DZ_SD_FS.remove("/config.new.json");
     }
   }
   
@@ -115,6 +120,23 @@ void DZConfigManager::parseConfigFile() {
   if (doc["ws_secure"]) cfg.ws_secure = doc["ws_secure"].as<bool>();
   if (doc["ws_allow_insecure"]) cfg.ws_allow_insecure = doc["ws_allow_insecure"].as<bool>();
   if (doc["ota_url"]) cfg.ota_url = doc["ota_url"].as<std::string>();
+
+  // ── DESFire AES‑128 key (hex string in config.json) ─────
+  if (doc["desfire_key"].is<const char*>()) {
+    const char *hex = doc["desfire_key"].as<const char*>();
+    size_t hexLen = strlen(hex);
+    if (hexLen == 32) {                     // 32 hex chars = 16 bytes
+      for (size_t i = 0; i < 16; ++i) {
+        char byteStr[3] = {hex[i*2], hex[i*2+1], '\0'};
+        cfg.desfireKey[i] = (uint8_t)strtoul(byteStr, nullptr, 16);
+      }
+      cfg.desfireKeySet = true;
+      logger.info("DESFire key loaded from config");
+    } else {
+      logger.info("DESFire key in config has invalid length (%d)", hexLen);
+    }
+  }
+
   logger.info("Config loaded successfully");
   stateControl.setError(ErrorSource::CFG, false, "");
 }

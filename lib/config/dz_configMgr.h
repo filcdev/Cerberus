@@ -16,6 +16,10 @@ struct DeviceConfig {
   bool ws_secure = false;
   bool ws_allow_insecure = false;
   std::string ota_url = "";
+
+  // ── DESFire ─────────────────────────────────────────────────
+  uint8_t desfireKey[16]  = {0};
+  bool    desfireKeySet   = false;
 };
 
 class DZConfigManager {
